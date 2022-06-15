@@ -1,103 +1,128 @@
+@import url('https://fonts.googleapis.com/css2?family=Poppins&family=Roboto:wght@100;300;400;500;700;900&family=Source+Sans+Pro:wght@200;300;400;600;700;900&display=swap');
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: 'Poppins', sans-serif;
+}
+
 body {
-    background: #04A1BF;
-    text-align: center;
-    font-family: 'Open Sans', sans-serif;
-}
-
-.intro {
-    margin: 30px 0px;
-    font-weight: bold;
-}
-
-h1 {
-    color: #ffffff;
-    text-transform: uppercase;
-    font-weight: 800;
+    display: flex;
+    justify-content: center;
+    background-color: whitesmoke;
 }
 
 p {
-    font-weight: 600;
-}
-
-#first {
-    margin-top: 10px;
-    color: #FFCD5D;
-}
-
-#second {
-    color: #51DF70;
-}
-
-#third {
-    color: #025F70;
-    margin-bottom: 30px;
-}
-
-#enter {
-    border: none;
-    padding: 5px 15px;
-    border-radius: 5px;
-    color: #04A1BF;
-    background-color: #025F70;
-    transition: all 0.75s ease;
-    -webkit-transition: all 0.75s ease;
-    -moz-transition: all 0.75s ease;
-    -o-transition: all 0.75s ease;
-    font-weight: normal;
-}
-
-#enter:hover {
-    background-color: #02798F;
-    color: #FFCD5D;
+    display: flex;
+    justify-content: center;
+    font-size: xx-large;
+    font-weight: bold;
 }
 
 ul {
-    text-align: left;
+    display: flex;
+    flex-direction: column-reverse;
+    margin-bottom: 20px;
+}
+
+.header button {
+    position: absolute;
+    right: 18%;
+    margin-top: -30px;
+}
+
+.header i {
+    font-size: 22px;
+}
+
+.to-do {
+    margin-top: 40px;
+    width: 60%;
+}
+
+.textInsert {
+    border: none;
+    padding: 10px;
+    border-radius: 10px;
+    outline: none;
+    width: 90%;
+}
+
+.divInsert {
+    padding: 10px;
+    background-color: lightgray;
+    border-radius: 10px;
+    display: flex;
+    box-shadow: 6px 5px 10px 0px grey;
+}
+
+button {
+    width: 10%;
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    outline: none;
+}
+
+.bx-plus {
+    font-size: 30px;
+    margin-left: 10px;
+    background-color: rgb(139, 14, 223);
+    border-radius: 50%;
+    padding: 5px;
+    color: white;
+}
+
+.divLi {
     margin-top: 20px;
+    padding: 10px;
+    background: lightgray;
+    border-radius: 10px;
+    box-shadow: 6px 5px 10px 0px grey;
+    display: flex;
+    align-items: center;
+}
+
+.divLi span {
+    width: 80%;
+    color: dimgray;
+}
+
+.divLi input {
+    width: 10%;
+    outline: none;
+    accent-color: currentcolor;
+}
+
+.divLi i {
+    font-size: 22px;
+    color: brown;
 }
 
 li {
-    list-style: none;
-    padding: 10px 20px;
-    color: #ffffff;
-    text-transform: capitalize;
-    font-weight: 600;
-    border: 2px solid #025F70;
-    border-radius: 5px;
-    margin-bottom: 10px;
-    background: #4EB9CD;
-    transition: all 0.75s ease;
-	-webkit-transition: all 0.5s ease;
-	-moz-transition: all 0.5s ease;
-	-ms-transition: all 0.5s ease;
-	-o-transition: all 0.5 ease;
+    list-style-type: none;
 }
 
-li:hover {
-    background: #76CFE0;
+.line-through {
+    text-decoration: line-through;
 }
 
-li > button {
-    font-weight: normal;
-    background: none;
-    border: none;
-    float: right;
-    color: #025F70;
-    font-weight: 800;
-}
-
-input {
-    border-radius: 5px;
-    min-width: 65%;
-    padding: 5px;
-    border: none;
-}
-
-.done {
-    background: #51DF70 !important;
-	color: #00891E;
-}
-
-.delete {
-    display: none;
-}
+@media (max-width: 775px) {
+    input {
+      width: 70%;
+    }
+  
+    .divInsert button {
+      width: 30%;
+    }
+  
+    i {
+      font-size: 30px;
+      padding: 0px;
+    }
+  
+    p {
+      font-size: x-large;
+    }
+  }

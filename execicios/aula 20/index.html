@@ -4,42 +4,23 @@
     <meta charset="UTF-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Lista de afazeres</title>
+    <title>To-Do List</title>
     <link rel="stylesheet" href="style.css">
+    <link href='https://unpkg.com/boxicons@2.1.2/css/boxicons.min.css' rel='stylesheet'>
 </head>
 <body>
-    <div class="container">
-        <div class="row">
-            <div class="intro col-12">
-                <h1>LISTA DE AFAZERES</h1>
-                <div>
-                    <div class="border1"></div>
-                </div>
-            </div>
+    <div class="to-do">
+        <div class="header">
+            <p>Lista de Afazeres</p>
+            <button><i class="bx bxs-trash-alt"></i></button>
         </div>
-    </div>
-
-    <div class="row">
-        <div class="helpText col-12">
-            <p id="first">Digite o texto no campo de entrada para adicionar itens à sua lista.</p>
-            <p id="second">Clique no item para marcá-lo como concluído.
-            </p>
-            <p id="third">Clique no "X" para remover o item da sua lista.
-            </p>
+        <hr/>
+        <br/>
+        <div class="divInsert">
+            <input class="textInsert" type="text">
+            <button><i class="bx bx-plus"></i></button>
         </div>
-    </div>
-
-    <div class="row">
-        <div class="col-12">
-            <input id="userInput" type="text" placeholder="Novo item" maxlength="27">
-            <button id="enter"><i class="fas fa-pencil-alt"></i></button>
-        </div>
-    </div>
-
-    <div class="row">
-        <div class="listItems col-12">
-            <ul class="col-12 offset-0 col-sm-8 offset-sm-2"></ul>
-        </div>
+        <ul></ul>
     </div>
     <script src="./script.js"></script>
 </body>
