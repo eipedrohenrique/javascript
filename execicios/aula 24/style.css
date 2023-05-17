@@ -1,0 +1,44 @@
+.calculator {
+    background-color: #f4f4f4;
+    border-radius: 10px;
+    width: 300px;
+    margin: auto;
+    margin-top: 50px;
+    padding: 10px;
+}
+
+.display {
+    background-color: #fff;
+    border-radius: 5px;
+    margin-bottom: 10px;
+    padding: 10px;
+}
+
+.display input[type="text"] {
+    width: 100%;
+    border: none;
+    font-size: 24px;
+    text-align: right;
+}
+
+.buttons button {
+    background-color: #dcdcdc;
+    border: none;
+    border-radius: 5px;
+    color: #333;
+    cursor: pointer;
+    font-size: 18px;
+    margin: 5px;
+    padding: 10px;
+    width: 50px;
+}
+
+.buttons button:hover {
+    background-color: #bbb;
+    color: #fff;
+}
+
+.buttons .operator {
+    background-color: #ff8c00;
+    color: #fff;
+}
