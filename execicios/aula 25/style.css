@@ -1,82 +1,65 @@
-/* CSS Customizado - Focado em Cores e Roleta */
-
-/* Variáveis customizadas (ajustadas para tema escuro do Bootstrap) */
-:root {
-    --cor-primaria: #0d6efd; /* Azul padrão do Bootstrap */
-    --cor-secundaria: #6c757d; /* Cinza padrão do Bootstrap */
-    --cor-fundo-card: #212529; /* Cor de fundo do Dark Mode */
-    --cor-texto: #f8f9fa;
-    --cor-erro: #dc3545;
+/* Estilos globais */
+body {
+    background-color: #f8f9fa; /* Cinza claro para o fundo */
 }
 
-/* Container Customizado */
-.custom-container {
-    background-color: var(--cor-fundo-card);
-    max-width: 650px; /* Aumentado um pouco para melhor layout */
-}
-
-/* Estilo da Roleta */
-.roulette-wrapper {
+/* Estilos da Roleta */
+.roleta-container {
     position: relative;
-    width: 350px;
-    height: 350px;
-    margin: 20px auto;
-}
-
-canvas {
     width: 100%;
-    height: 100%;
-    /* Removido o transition do CSS. A rotação é feita pelo JS para maior precisão */
+    /* Garante que o container seja quadrado (ajuste conforme necessário) */
+    max-width: 400px; 
+    margin: 0 auto;
+    display: flex;
+    justify-content: center;
+    align-items: center;
 }
 
-.pointer {
+#roletaCanvas {
+    /* Define o tamanho do canvas para ser responsivo dentro do container */
+    width: 100%;
+    height: auto;
+    border-radius: 50%; /* Faz a roleta parecer circular */
+    box-shadow: 0 0 20px rgba(0, 0, 0, 0.2);
+}
+
+/* Estilo do Ponteiro (Triângulo que aponta para o resultado) */
+#ponteiro {
     position: absolute;
-    top: 50%;
-    /* Posiciona a seta no canto direito da roleta */
-    left: calc(100% - 15px); 
-    transform: translateY(-50%);
+    top: 0;
+    left: 50%;
+    transform: translate(-50%, -100%); /* Centraliza e posiciona acima do card-header */
     width: 0;
     height: 0;
-    border-style: solid;
-    border-width: 20px 0 20px 30px;
-    border-color: transparent transparent transparent var(--cor-primaria);
+    border-left: 15px solid transparent; /* Lado esquerdo do triângulo */
+    border-right: 15px solid transparent; /* Lado direito do triângulo */
+    border-top: 25px solid #dc3545; /* Base (vermelha) do triângulo - aponta para baixo */
     z-index: 10;
 }
 
-/* Estilos de Lista customizados do Bootstrap */
-#movie-list .list-group-item {
+/* Estilos para a lista de filmes */
+.filme-item {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    background-color: #343a40; /* Cor escura */
-    border-color: #495057;
-    margin-bottom: 5px;
 }
 
-.movie-weight {
-    color: var(--cor-primaria);
-    font-weight: bold;
-    margin-right: 15px;
-    min-width: 50px;
-    text-align: right;
+.filme-nome {
+    flex-grow: 1;
+    word-break: break-word; /* Garante que nomes longos quebrem a linha */
 }
 
-/* Botão de Excluir do Bootstrap (usando cor de erro) */
-.delete-btn {
-    background-color: var(--cor-erro);
-    color: white;
-    border: none;
-    border-radius: 50%;
-    width: 24px;
-    height: 24px;
-    font-weight: bold;
-    cursor: pointer;
-    line-height: 24px;
-    padding: 0;
-    font-size: 0.8rem;
-    transition: background-color 0.2s;
+.filme-peso {
+    font-size: 0.85em;
+    color: #6c757d;
+    margin-left: 10px;
 }
 
-.delete-btn:hover {
-    background-color: #c82333;
+.btn-remover-filme {
+    margin-left: 15px;
+}
+
+/* Efeito de rotação (controlado pelo JS) */
+.roleta-girando {
+    /* Adicione quaisquer estilos de transição ou animação aqui se desejar um fallback */
 }
