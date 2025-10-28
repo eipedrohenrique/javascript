@@ -1,263 +1,374 @@
-// JAVASCRIPT (A Lógica da Roleta com Peso e Embaralhamento - Versão Bootstrap)
-const canvas = document.getElementById('roulette-canvas');
+// ====================================================================
+// Variáveis Globais
+// ====================================================================
+let filmes = [];
+let filmesComPeso = []; // Lista expandida para o sorteio (com repetições)
+let isGirando = false;
+
+// Elementos do DOM
+const filmeInput = document.getElementById('filmeInput');
+const pesoInput = document.getElementById('pesoInput');
+const adicionarFilmeBtn = document.getElementById('adicionarFilmeBtn');
+const listaFilmesUl = document.getElementById('listaFilmes');
+const listaVaziaMsg = document.getElementById('listaVaziaMsg');
+const girarBtn = document.getElementById('girarBtn');
+const embaralharBtn = document.getElementById('embaralharBtn');
+const limparListaBtn = document.getElementById('limparListaBtn');
+const timerInput = document.getElementById('timerInput');
+const resultadoModal = new bootstrap.Modal(document.getElementById('resultadoModal'));
+const filmeSorteadoNome = document.getElementById('filmeSorteadoNome');
+
+// Canvas e Contexto
+const canvas = document.getElementById('roletaCanvas');
 const ctx = canvas.getContext('2d');
-const movieInput = document.getElementById('movie-input');
-const weightInput = document.getElementById('weight-input');
-const addMovieBtn = document.getElementById('add-movie-btn');
-const spinBtn = document.getElementById('spin-btn');
-const resultDiv = document.getElementById('result');
-const movieListContainer = document.getElementById('movie-list-container');
-const movieListUl = document.getElementById('movie-list');
-const spinDurationInput = document.getElementById('spin-duration');
-const shuffleBtn = document.getElementById('shuffle-btn');
+const roletaRadius = 200; // Raio da roleta (ajuste para o tamanho do canvas)
+canvas.width = roletaRadius * 2;
+canvas.height = roletaRadius * 2;
+const centroX = roletaRadius;
+const centroY = roletaRadius;
 
-// Estrutura do filme: { name: 'Filme X', weight: 10 }
-let movies = [];
-// Cores para o Canvas (sem depender das classes Bootstrap)
-const colors = ["#0d6efd", "#6610f2", "#6f42c1", "#d63384", "#fd7e14", "#ffc107", "#20c997", "#198754"];
-let isSpinning = false;
+// ====================================================================
+// Funções de Gerenciamento da Lista
+// ====================================================================
 
-let displayMovies = []; // Array que será usado para o desenho da roleta (embaralhado)
+/**
+ * Adiciona um filme à lista principal e recalcula a lista com pesos.
+ */
+function adicionarFilme() {
+    const nome = filmeInput.value.trim();
+    let peso = parseInt(pesoInput.value);
 
-// Função de embaralhamento (Fisher-Yates)
-const shuffleArray = (array) => {
-    let newArray = [...array];
-    for (let i = newArray.length - 1; i > 0; i--) {
-        const j = Math.floor(Math.random() * (i + 1));
-        [newArray[i], newArray[j]] = [newArray[j], newArray[i]];
-    }
-    return newArray;
-};
-
-const drawRoulette = () => {
-    const segments = displayMovies;
-    const totalWeight = segments.reduce((sum, movie) => sum + movie.weight, 0);
-    const centerX = canvas.width / 2;
-    const centerY = canvas.height / 2;
-    const radius = canvas.width / 2 - 10;
-    let currentStartAngle = 0;
-
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-    ctx.font = 'bold 18px sans-serif'; 
-
-    if (segments.length === 0 || totalWeight === 0) {
-        ctx.beginPath();
-        ctx.arc(centerX, centerY, radius, 0, 2 * Math.PI);
-        ctx.fillStyle = '#333';
-        ctx.fill();
-        ctx.fillStyle = '#fff';
-        ctx.textAlign = 'center';
-        ctx.textBaseline = 'middle';
-        ctx.fillText('Adicione filmes e seus pesos!', centerX, centerY);
+    if (nome === "") {
+        alert("Por favor, digite o nome do filme.");
         return;
     }
 
-    // Desenha cada segmento proporcional ao seu peso
-    segments.forEach((movie, i) => {
-        const segmentAngle = (movie.weight / totalWeight) * (2 * Math.PI);
-        const endAngle = currentStartAngle + segmentAngle;
+    if (isNaN(peso) || peso < 1) {
+        peso = 1; // Garante um peso mínimo de 1
+        pesoInput.value = 1;
+    }
 
-        // Desenha a fatia
+    filmes.push({ nome, peso });
+
+    // Limpa inputs
+    filmeInput.value = '';
+    pesoInput.value = 1;
+
+    // Atualiza tudo
+    atualizarListaFilmesDOM();
+    recalcularFilmesComPeso();
+    desenharRoleta();
+}
+
+/**
+ * Remove um filme da lista principal.
+ * @param {number} index - O índice do filme a ser removido na lista 'filmes'.
+ */
+function removerFilme(index) {
+    if (confirm(`Tem certeza que deseja remover "${filmes[index].nome}"?`)) {
+        filmes.splice(index, 1);
+        atualizarListaFilmesDOM();
+        recalcularFilmesComPeso();
+        desenharRoleta();
+    }
+}
+
+/**
+ * Embaralha a ordem dos filmes na lista principal.
+ */
+function embaralharFilmes() {
+    if (filmes.length === 0) return;
+    
+    // Algoritmo de Fisher-Yates para embaralhar
+    for (let i = filmes.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [filmes[i], filmes[j]] = [filmes[j], filmes[i]];
+    }
+
+    atualizarListaFilmesDOM();
+    recalcularFilmesComPeso();
+    desenharRoleta();
+}
+
+/**
+ * Limpa toda a lista de filmes.
+ */
+function limparLista() {
+    if (filmes.length === 0) return;
+    if (confirm("Tem certeza que deseja limpar toda a lista de filmes?")) {
+        filmes = [];
+        filmesComPeso = [];
+        atualizarListaFilmesDOM();
+        desenharRoleta();
+    }
+}
+
+/**
+ * Cria a lista expandida para o sorteio, repetindo os filmes de acordo com o peso.
+ */
+function recalcularFilmesComPeso() {
+    filmesComPeso = [];
+    filmes.forEach(filme => {
+        for (let i = 0; i < filme.peso; i++) {
+            filmesComPeso.push(filme.nome);
+        }
+    });
+
+    girarBtn.disabled = filmesComPeso.length < 2;
+}
+
+/**
+ * Atualiza o HTML da lista de filmes (coluna lateral).
+ */
+function atualizarListaFilmesDOM() {
+    listaFilmesUl.innerHTML = '';
+    if (filmes.length === 0) {
+        listaFilmesUl.innerHTML = `<li class="list-group-item text-center text-muted" id="listaVaziaMsg">Adicione filmes para começar!</li>`;
+    } else {
+        filmes.forEach((filme, index) => {
+            const li = document.createElement('li');
+            li.className = 'list-group-item filme-item';
+            li.innerHTML = `
+                <span class="filme-nome">${filme.nome}</span>
+                <span class="filme-peso">(${filme.peso}x)</span>
+                <button class="btn btn-sm btn-outline-danger btn-remover-filme" data-index="${index}">
+                    <i class="bi bi-x-lg"></i> Excluir
+                </button>
+            `;
+            listaFilmesUl.appendChild(li);
+        });
+
+        // Adiciona listeners para os botões de remover
+        document.querySelectorAll('.btn-remover-filme').forEach(button => {
+            button.addEventListener('click', (e) => {
+                const index = parseInt(e.currentTarget.getAttribute('data-index'));
+                removerFilme(index);
+            });
+        });
+    }
+}
+
+
+// ====================================================================
+// Funções de Desenho da Roleta (Canvas)
+// ====================================================================
+
+/**
+ * Gera uma cor hexadecimal aleatória.
+ * @returns {string} Cor em formato '#RRGGBB'.
+ */
+function gerarCorAleatoria() {
+    const letters = '0123456789ABCDEF';
+    let color = '#';
+    for (let i = 0; i < 6; i++) {
+        color += letters[Math.floor(Math.random() * 16)];
+    }
+    return color;
+}
+
+/**
+ * Desenha a roleta no Canvas.
+ */
+function desenharRoleta() {
+    // Se a lista estiver vazia, apenas limpa o canvas
+    if (filmes.length === 0) {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        ctx.fillStyle = '#e9ecef'; // Cor de fundo suave
         ctx.beginPath();
-        ctx.moveTo(centerX, centerY);
-        ctx.arc(centerX, centerY, radius, currentStartAngle, endAngle);
-        ctx.closePath();
-        ctx.fillStyle = colors[i % colors.length];
+        ctx.arc(centroX, centroY, roletaRadius, 0, 2 * Math.PI);
         ctx.fill();
+
+        // Texto informativo
+        ctx.fillStyle = '#6c757d';
+        ctx.font = '16px Arial';
+        ctx.textAlign = 'center';
+        ctx.fillText("Adicione filmes!", centroX, centroY);
+        return;
+    }
+
+    const numOpcoes = filmes.length;
+    const angleSlice = (2 * Math.PI) / numOpcoes; // Ângulo de cada fatia
+
+    let currentAngle = 0;
+    
+    // Para garantir que as cores sejam as mesmas em um redesenho, 
+    // podemos armazená-las ou usar um gerador determinístico. 
+    // Para simplificar, vamos gerar novas cores a cada redesenho.
+    
+    filmes.forEach(filme => {
+        const startAngle = currentAngle;
+        const endAngle = currentAngle + angleSlice;
+
+        // 1. Desenha a fatia
+        ctx.beginPath();
+        ctx.moveTo(centroX, centroY);
+        ctx.arc(centroX, centroY, roletaRadius, startAngle, endAngle);
+        ctx.closePath();
         
-        // Desenha o texto
-        ctx.save();
-        ctx.translate(centerX, centerY);
-        ctx.rotate(currentStartAngle + segmentAngle / 2); 
+        ctx.fillStyle = gerarCorAleatoria(); 
+        ctx.fill();
+        ctx.strokeStyle = '#fff';
+        ctx.lineWidth = 2;
+        ctx.stroke();
+
+        // 2. Desenha o texto
+        ctx.save(); // Salva o estado atual
+        
+        ctx.translate(centroX, centroY);
+        const textAngle = startAngle + angleSlice / 2;
+        ctx.rotate(textAngle);
+        
+        ctx.fillStyle = '#000'; // Cor do texto
+        ctx.font = '14px sans-serif';
         ctx.textAlign = 'right';
-        ctx.fillStyle = '#121212';
-        const text = movie.name.length > 15 ? movie.name.substring(0, 14) + '...' : movie.name;
-        ctx.fillText(text, radius - 15, 10);
-        ctx.restore();
-        
-        currentStartAngle = endAngle;
-    });
-};
 
-const updateUI = () => {
-    const totalWeight = movies.reduce((sum, movie) => sum + movie.weight, 0);
+        // Posição do texto (perto da borda)
+        const textX = roletaRadius * 0.9;
+        const textY = 0; 
 
-    // 1. Atualiza o array de exibição com a ordem embaralhada
-    if (movies.length > 0) {
-        if (displayMovies.length === 0 || displayMovies.length !== movies.length) {
-             displayMovies = [...movies];
-        }
-    } else {
-        displayMovies = [];
-    }
+        // O texto precisa ser quebrado para caber
+        const maxLen = 12; // Número máximo de caracteres por linha
+        const nomeFilme = filme.nome.toUpperCase();
 
-    // 2. Atualiza a lista lateral (usando classes Bootstrap)
-    movieListUl.innerHTML = '';
-    if (movies.length > 0) {
-        movieListContainer.style.display = 'block';
-    } else {
-        movieListContainer.style.display = 'none';
-    }
-    
-    movies.forEach((movie, index) => {
-        const li = document.createElement('li');
-        // Aplica classes de lista do Bootstrap
-        li.className = 'list-group-item d-flex justify-content-between align-items-center'; 
-        
-        const movieText = document.createElement('span');
-        movieText.textContent = movie.name;
-
-        const weightDisplay = document.createElement('span');
-        const percentage = totalWeight > 0 ? ((movie.weight / totalWeight) * 100).toFixed(1) : 0;
-        weightDisplay.textContent = `(${movie.weight}x - ${percentage}%)`;
-        weightDisplay.className = 'movie-weight';
-        
-        const deleteBtn = document.createElement('button');
-        deleteBtn.textContent = 'X';
-        deleteBtn.className = 'delete-btn text-center'; 
-        deleteBtn.dataset.index = index; 
-        
-        li.appendChild(movieText);
-        li.appendChild(weightDisplay);
-        li.appendChild(deleteBtn);
-        movieListUl.appendChild(li);
-    });
-
-    // 3. Desenha a roleta
-    drawRoulette();
-    
-    spinBtn.disabled = movies.length === 0 || totalWeight === 0 || isSpinning;
-};
-
-const addMovie = () => {
-    const movieName = movieInput.value.trim();
-    const movieWeight = parseInt(weightInput.value, 10);
-    
-    if (movieName && movieWeight >= 1 && !isSpinning) {
-        movies.push({ name: movieName, weight: movieWeight });
-        movieInput.value = '';
-        weightInput.value = 1;
-        
-        displayMovies = shuffleArray(movies); 
-        updateUI();
-    }
-    movieInput.focus();
-};
-
-const deleteMovie = (index) => {
-    if (!isSpinning) {
-        movies.splice(index, 1); 
-        displayMovies = shuffleArray(movies); 
-        updateUI();
-    }
-};
-
-const handleShuffle = () => {
-    if (movies.length > 1 && !isSpinning) {
-        displayMovies = shuffleArray(movies);
-        drawRoulette(); 
-    }
-};
-
-const spin = () => {
-    const totalWeight = movies.reduce((sum, movie) => sum + movie.weight, 0);
-    if (isSpinning || totalWeight === 0) return;
-
-    isSpinning = true;
-    spinBtn.disabled = true;
-    resultDiv.textContent = 'Sorteando...';
-    
-    // 1. Determinar o VENCEDOR (Probabilidade)
-    let randomValue = Math.random() * totalWeight; 
-    let winningIndex = -1;
-    let cumulativeWeight = 0;
-    for (let i = 0; i < movies.length; i++) {
-        cumulativeWeight += movies[i].weight;
-        if (randomValue < cumulativeWeight) {
-            winningIndex = i;
-            break;
-        }
-    }
-    const winner = movies[winningIndex];
-
-    // 2. Determinar o ÂNGULO DE PARADA (Visual)
-    const winningSegment = winner; 
-    const winningSegmentIndex = displayMovies.findIndex(m => m.name === winningSegment.name && m.weight === winningSegment.weight);
-    
-    let angleStart = 0;
-    let angleEnd = 0;
-    
-    for (let i = 0; i < displayMovies.length; i++) {
-        const segmentAngle = (displayMovies[i].weight / totalWeight) * (2 * Math.PI);
-        angleEnd = angleStart + segmentAngle;
-        
-        if (i === winningSegmentIndex) {
-            break; 
-        }
-        angleStart = angleEnd;
-    }
-
-    const middleAngleOfSegment = angleStart + (angleEnd - angleStart) / 2;
-    const targetAngleOnWheel = (2 * Math.PI - middleAngleOfSegment) % (2 * Math.PI);
-    
-    const variation = (Math.random() - 0.5) * (angleEnd - angleStart) * 0.5;
-    const finalTargetAngle = (targetAngleOnWheel + variation) % (2 * Math.PI);
-
-    // 3. Configurar e Iniciar a Animação
-    const spinDuration = (parseInt(spinDurationInput.value, 10) || 5) * 1000;
-    const numRotations = 5; 
-    const finalRotationInRad = (numRotations * 2 * Math.PI) + finalTargetAngle;
-    
-    let start = null;
-
-    const spinAnimation = (timestamp) => {
-        if (!start) start = timestamp;
-        const elapsed = timestamp - start;
-        const progress = Math.min(elapsed / spinDuration, 1);
-        
-        const easedProgress = 1 - Math.pow(1 - progress, 3); // ease-out-cubic
-
-        const currentRotation = finalRotationInRad * easedProgress;
-        canvas.style.transform = `rotate(${currentRotation}rad)`;
-
-        if (progress < 1) {
-            requestAnimationFrame(spinAnimation);
+        if (nomeFilme.length > maxLen * 2) {
+             // Se for muito longo, truncar
+             const textoLinha1 = nomeFilme.substring(0, maxLen) + '...';
+             ctx.fillText(textoLinha1, textX - 5, textY - 5);
+        } else if (nomeFilme.length > maxLen) {
+            // Se for longo, dividir em duas linhas
+            const meio = Math.ceil(nomeFilme.length / 2);
+            const textoLinha1 = nomeFilme.substring(0, meio).trim();
+            const textoLinha2 = nomeFilme.substring(meio).trim();
+            ctx.fillText(textoLinha1, textX - 5, textY - 10);
+            ctx.fillText(textoLinha2, textX - 5, textY + 10);
         } else {
-            // Fim da animação
-            canvas.style.transform = `rotate(${finalRotationInRad}rad)`;
-            resultDiv.textContent = `O filme sorteado é: ${winner.name}!`;
-            isSpinning = false;
-            updateUI();
+            // Curto, uma linha
+            ctx.fillText(nomeFilme, textX - 5, textY + 5);
         }
-    };
+
+        ctx.restore(); // Restaura o estado anterior
+        
+        currentAngle = endAngle;
+    });
+
+    // Desenha o círculo central (opcional)
+    ctx.beginPath();
+    ctx.arc(centroX, centroY, 30, 0, 2 * Math.PI);
+    ctx.fillStyle = '#fff';
+    ctx.fill();
+    ctx.strokeStyle = '#000';
+    ctx.lineWidth = 1;
+    ctx.stroke();
+}
+
+// ====================================================================
+// Funções de Giro e Sorteio
+// ====================================================================
+
+/**
+ * Calcula a rotação necessária para que o filme sorteado pare no ponteiro.
+ * @param {number} sorteadoIndex - O índice do filme sorteado na lista `filmes`.
+ * @param {number} numOpcoes - Número total de fatias.
+ * @returns {number} O ângulo de rotação final.
+ */
+function calcularAnguloSorteado(sorteadoIndex, numOpcoes) {
+    const anguloPorFatia = 360 / numOpcoes;
     
-    requestAnimationFrame(spinAnimation);
-};
+    // O ponteiro está no topo (0 graus).
+    // O meio da fatia sorteada deve parar no topo.
+    
+    // Ângulo inicial do centro da fatia (em relação ao "zero" da roleta)
+    const anguloCentroFatia = 360 - (sorteadoIndex * anguloPorFatia + anguloPorFatia / 2);
+    
+    // A roleta precisa girar até que o ânguloCentroFatia esteja no topo.
+    // Adiciona giros completos para um efeito visual de várias voltas
+    const girosCompletos = 5; // Mínimo de 5 voltas
+    const rotacaoTotal = girosCompletos * 360 + anguloCentroFatia;
+    
+    // Adiciona um pequeno offset aleatório para que não pare sempre exatamente no centro
+    const offsetAleatorio = Math.random() * (anguloPorFatia / 2) - (anguloPorFatia / 4);
+    
+    return rotacaoTotal + offsetAleatorio;
+}
 
-// --- Event Listeners ---
-addMovieBtn.addEventListener('click', addMovie);
-shuffleBtn.addEventListener('click', handleShuffle); 
+/**
+ * Inicia a animação de giro da roleta.
+ */
+function girarRoleta() {
+    if (isGirando || filmesComPeso.length === 0) return;
+    
+    isGirando = true;
+    girarBtn.disabled = true;
+    adicionarFilmeBtn.disabled = true;
+    embaralharBtn.disabled = true;
 
-movieInput.addEventListener('keydown', (e) => {
-    if (e.key === 'Enter') {
-        addMovie();
-    }
+    // 1. Sorteia um filme da lista com pesos (maior chance se peso > 1)
+    const sorteadoNome = filmesComPeso[Math.floor(Math.random() * filmesComPeso.length)];
+    
+    // 2. Encontra o índice do *primeiro* item que corresponde ao sorteado na lista `filmes` (sem peso)
+    const sorteadoIndex = filmes.findIndex(f => f.nome === sorteadoNome);
+    
+    // 3. Calcula o ângulo final
+    const anguloFinal = calcularAnguloSorteado(sorteadoIndex, filmes.length);
+    
+    // 4. Inicia a animação CSS
+    const tempoGiroSegundos = parseFloat(timerInput.value) || 3;
+    
+    canvas.style.transition = `transform ${tempoGiroSegundos}s cubic-bezier(0.25, 0.1, 0.25, 1)`; // Efeito "slow out"
+    canvas.style.transform = `rotate(${anguloFinal}deg)`;
+    
+    // 5. Após o tempo de giro, finaliza o sorteio
+    setTimeout(() => {
+        // Remove a transição para que a próxima rotação comece do zero
+        canvas.style.transition = 'none'; 
+        
+        // Ajusta o transform para manter a posição final sem o acúmulo de transições
+        // Usa o módulo para manter o ângulo dentro de 0-360 se for necessário para debug
+        const anguloModulo = anguloFinal % 360; 
+        canvas.style.transform = `rotate(${anguloFinal}deg)`;
+        
+        isGirando = false;
+        girarBtn.disabled = filmesComPeso.length < 2;
+        adicionarFilmeBtn.disabled = false;
+        embaralharBtn.disabled = false;
+        
+        // Exibe o resultado no modal
+        filmeSorteadoNome.textContent = sorteadoNome;
+        resultadoModal.show();
+        
+        // Opcional: Remover o filme sorteado da lista
+        // const indiceParaRemover = filmes.findIndex(f => f.nome === sorteadoNome);
+        // if (indiceParaRemover !== -1) {
+        //     removerFilme(indiceParaRemover);
+        // }
+
+    }, tempoGiroSegundos * 1000);
+}
+
+
+// ====================================================================
+// Inicialização e Event Listeners
+// ====================================================================
+
+document.addEventListener('DOMContentLoaded', () => {
+    // Inicialização da Roleta
+    desenharRoleta();
+    
+    // Event Listeners
+    adicionarFilmeBtn.addEventListener('click', adicionarFilme);
+    girarBtn.addEventListener('click', girarRoleta);
+    embaralharBtn.addEventListener('click', embaralharFilmes);
+    limparListaBtn.addEventListener('click', limparLista);
+
+    // Permitir adicionar filme com a tecla Enter
+    filmeInput.addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') {
+            e.preventDefault(); // Evita o submit padrão de um formulário
+            adicionarFilme();
+        }
+    });
+
+    // Inicializa a lista e o botão
+    atualizarListaFilmesDOM();
+    recalcularFilmesComPeso();
 });
-weightInput.addEventListener('keydown', (e) => {
-    if (e.key === 'Enter') {
-        addMovie();
-    }
-});
-
-movieListUl.addEventListener('click', (e) => {
-    if (e.target.classList.contains('delete-btn')) {
-        const index = parseInt(e.target.dataset.index, 10);
-        deleteMovie(index);
-    }
-});
-
-spinBtn.addEventListener('click', spin);
-
-// Inicialização: Embaralha a lista inicial (se houver) e desenha
-displayMovies = shuffleArray(movies);
-updateUI();
